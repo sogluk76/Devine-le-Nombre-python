@@ -1,0 +1,80 @@
+import random
+import sqlite3
+import time
+
+def afficher_menu():
+  print("Menu:")
+  print("1. Jouer")
+  print("2. Voir les règles")
+  print("3. Quitter")
+  choix = input("Choisissez une option: ")
+  return choix
+
+def afficher_regles():
+  print("Le but du jeu est de deviner un nombre entier compris entre 1 et 1000.")
+  print("À chaque essai, le jeu vous dira si votre nombre est trop petit ou trop grand.")
+
+def enregistrer_score(pseudo, score):
+  connection = sqlite3.connect("scores.db")
+  cursor = connection.cursor()
+
+  cursor.execute(
+    "CREATE TABLE IF NOT EXISTS scores (pseudo TEXT, score INTEGER)"
+  )
+
+  cursor.execute(
+    "INSERT INTO scores (pseudo, score) VALUES (?, ?)", (pseudo, score)
+  )
+
+  connection.commit()
+  connection.close()
+
+def afficher_scores():
+  connection = sqlite3.connect("scores.db")
+  cursor = connection.cursor()
+
+  cursor.execute("SELECT * FROM scores ORDER BY score ASC")
+  scores = cursor.fetchall()
+
+  print("Pseudo | Score")
+  print("----------------")
+  for pseudo, score in scores:
+    print("{} | {}".format(pseudo, score))
+
+  connection.close()
+
+def jouer():
+  pseudo = input("Entrez votre pseudo: ")
+  nombre_secret = random.randint(1, 1000)
+  nombre_essais = 0
+  devine = False
+
+  while not devine:
+    nombre_essais += 1
+    print(nombre_secret)
+    nombre = int(input("Devinez un nombre entre 1 et 1000: "))
+
+    if nombre < nombre_secret:
+      print("Le nombre est trop petit.")
+    elif nombre > nombre_secret:
+      print("Le nombre est trop grand.")
+    else:
+      devine = True
+      print("Félicitations, vous avez deviné le nombre en {} essais!".format(nombre_essais))
+      enregistrer_score(pseudo, nombre_essais)
+
+choix = ""
+while choix != "3":
+  choix = afficher_menu()
+
+  if choix == "1":
+    jouer()
+  elif choix == "2":
+    afficher_regles()
+  elif choix == "3":
+    print("Au revoir!")
+  else:
+    print("Option non valide, veuillez choisir à nouveau.")
+
+  afficher_scores()
+  time.sleep(3)
